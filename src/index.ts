@@ -1,5 +1,25 @@
 require('dotenv-flow').config();
 
+// The Cloud Functions for Firebase SDK to create Cloud Functions and triggers.
+const { onRequest } = require("firebase-functions/v2/https");
+
+// The Firebase Admin SDK to access Firestore.
+const { initializeApp, cert } = require('firebase-admin/app');
+
+const isLocal = process.env.NODE_ENV === 'development';
+
+if (isLocal) {
+  const serviceAccount = {
+    "project_id": process.env.FB_PROJECT_ID,
+    "private_key": process.env.FB_PRIVATE_KEY?.replace(/\\n|\\/g, "\n"),
+    "client_email": process.env.FB_CLIENT_EMAIL,
+  };
+
+  initializeApp({ credential: cert(serviceAccount) });
+} else {
+  initializeApp();
+}
+
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser')
 const compression = require("compression");
@@ -38,9 +58,8 @@ app.all('*', function (_req: any, res: any, next: any) {
 const problemsRoute = require('./routes/problems');
 app.use('/', problemsRoute);
 
-const isLocalDev = process.env.NODE_ENV === 'development';
 
-if (isLocalDev) {
+if (isLocal) {
   const port = process.env.PORT || 3000;
 
   app.set('port', port)
@@ -50,12 +69,6 @@ if (isLocalDev) {
   module.exports = app
 }
 
-// The Cloud Functions for Firebase SDK to create Cloud Functions and triggers.
-const { onRequest } = require("firebase-functions/v2/https");
-
-// The Firebase Admin SDK to access Firestore.
-const { initializeApp } = require("firebase-admin/app");
-initializeApp();
 
 // leetcode1 will be the name of the function as well as API
 //in which we will pass our express app
